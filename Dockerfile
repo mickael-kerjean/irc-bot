@@ -1,30 +1,22 @@
-# Build
-FROM golang:alpine AS build
+FROM golang:alpine as builder
 
-ARG TAG
-ARG BUILD
+ENV GOPATH /go/
 
-ENV APP cadmus
-ENV REPO prologic/$APP
-
+WORKDIR /app/
 RUN apk add --update git make build-base && \
-    rm -rf /var/cache/apk/*
+    mkdir -p /go/src/github.com/mickael-kerjean && \
+    cd /go/src/github.com/mickael-kerjean && \
+    git clone https://github.com/mickael-kerjean/prologic_cadmus_fork --depth 1 && \
+    cd prologic_cadmus_fork && \
+    go get -v ./... && \
+    go build -o /app/run cmd/cadmus/main.go
 
-WORKDIR /go/src/github.com/$REPO
-COPY . /go/src/github.com/$REPO
-RUN make TAG=$TAG BUILD=$BUILD build
+FROM alpine:latest
+COPY --from=builder /app/ /app/
+RUN addgroup -S bot && adduser -S -g bot bot && \
+    mkdir -p /app/logs/ && \
+    chown -R bot:bot /app
 
-# Runtime
-FROM alpine
-
-ENV APP cadmus
-ENV REPO prologic/$APP
-
-LABEL cadmus.app main
-
-COPY --from=build /go/src/github.com/${REPO}/cmd/${APP}/${APP} /${APP}
-
-EXPOSE 8000/tcp
-
-ENTRYPOINT ["/cadmus"]
-CMD [""]
+USER bot
+VOLUME ["/app/logs/"]
+CMD ["/app/run", "irc.freenode.net:6667"]

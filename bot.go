@@ -2,7 +2,6 @@ package cadmus
 
 import (
 	"crypto/tls"
-	"regexp"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -13,23 +12,22 @@ import (
 )
 
 type Config struct {
-	Nick string
-	User string
-	Name string
-
-	Debug   bool
-	DBPath  string
-	LogPath string
+	Nick     string
+	User     string
+	Name     string
+	Password string
+	Chan     []string
+	Debug    bool
+	DBPath   string
+	LogPath  string
 }
 
 type Bot struct {
-	addr   *Addr
-	config *Config
-
-	db   *storm.DB
-	cron *cron.Cron
-	conn *irc.Connection
-
+	addr    *Addr
+	config  *Config
+	db      *storm.DB
+	cron    *cron.Cron
+	conn    *irc.Connection
 	network string
 	loggers *ChannelLoggerMap
 }
@@ -79,26 +77,11 @@ func (b *Bot) onInvite(e *irc.Event) {
 }
 
 func (b *Bot) onConnected(e *irc.Event) {
-	var channels []Channel
-
 	log.Info("Connected!")
-
-	p := regexp.MustCompile("^[Ww]elcome to the (.*) Internet Relay Network")
-	matches := p.FindStringSubmatch(e.Message())
-	if len(matches) == 2 {
-		b.network = matches[1]
-		log.Infof("Network is %s", b.network)
-	}
-
-	err := b.db.All(&channels)
-	if err != nil {
-		log.Fatalf("error loading channels from db: %s", err)
-	}
-
-	for _, channel := range channels {
-		b.conn.Join(channel.Name)
-		b.conn.Mode(channel.Name)
-		log.Infof("Joined %s", channel.Name)
+	for _, channel := range b.config.Chan {
+		b.conn.Join(channel)
+		b.conn.Mode(channel)
+		log.Infof("Joined %s", channel)
 	}
 }
 
@@ -145,6 +128,9 @@ func (b *Bot) Run() error {
 
 	b.conn = irc.IRC(b.config.Nick, b.config.User)
 	b.conn.RealName = b.config.Name
+	if b.config.Password != "" {
+		b.conn.Password = b.config.Password
+	}
 
 	b.conn.VerboseCallbackHandler = b.config.Debug
 	b.conn.Debug = b.config.Debug

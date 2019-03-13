@@ -2,19 +2,17 @@ package main
 
 import (
 	"fmt"
-	"os"
-
-	log "github.com/sirupsen/logrus"
-
 	"github.com/namsral/flag"
-
-	"github.com/prologic/cadmus"
+	"github.com/mickael-kerjean/prologic_cadmus_fork"
+	log "github.com/sirupsen/logrus"
+	"os"
+	"strings"
 )
 
 const (
-	nick = "cadmus"
-	user = "Cadmus"
-	name = "Founder, King"
+	nick = "filestash"
+	user = "filestash"
+	name = "Filestash, Bot"
 )
 
 func main() {
@@ -22,7 +20,6 @@ func main() {
 		version bool
 		config  string
 		debug   bool
-
 		dbpath  string
 		logpath string
 	)
@@ -30,10 +27,8 @@ func main() {
 	flag.BoolVar(&version, "v", false, "display version information")
 	flag.StringVar(&config, "c", "", "config file")
 	flag.BoolVar(&debug, "d", false, "debug logging")
-
-	flag.StringVar(&dbpath, "dbpath", "cadmus.db", "path to database")
-	flag.StringVar(&logpath, "logpath", "./logs", "path to store logs")
-
+	flag.StringVar(&dbpath, "dbpath", "/app/cadmus.db", "path to database")
+	flag.StringVar(&logpath, "logpath", "/app/logs", "path to store logs")
 	flag.Parse()
 
 	if debug {
@@ -52,12 +47,14 @@ func main() {
 	}
 
 	bot := cadmus.NewBot(flag.Arg(0), &cadmus.Config{
-		Nick:    nick,
-		User:    user,
-		Name:    name,
-		Debug:   debug,
-		DBPath:  dbpath,
-		LogPath: logpath,
+		Chan:     strings.Split(os.Getenv("BOT_CHANNELS"), ","),
+		Nick:     os.Getenv("BOT_NICK"),
+		User:     os.Getenv("BOT_USER"),
+		Name:     os.Getenv("BOT_REALNAME"),
+		Password: os.Getenv("BOT_PASSWORD"),
+		Debug:    debug,
+		DBPath:   dbpath,
+		LogPath:  logpath,
 	})
 	log.Fatal(bot.Run())
 }
