@@ -6,9 +6,8 @@ WORKDIR /app/
 RUN apk add --update git make build-base && \
     mkdir -p /go/src/github.com/mickael-kerjean && \
     cd /go/src/github.com/mickael-kerjean && \
-    git clone https://github.com/mickael-kerjean/prologic_cadmus_fork --depth 1 && \
-    cd prologic_cadmus_fork && \
-    go get -v ./... && \
+    git clone https://github.com/mickael-kerjean/irc-bot --depth 1 && \
+    cd irc-bot && \
     go build -o /app/run cmd/cadmus/main.go
 
 FROM alpine:latest
