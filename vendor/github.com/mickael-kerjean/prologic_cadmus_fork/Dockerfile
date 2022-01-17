@@ -19,4 +19,4 @@ RUN addgroup -S bot && adduser -S -g bot bot && \
 
 USER bot
 VOLUME ["/app/logs/"]
-CMD ["/app/run", "irc.libera.chat:6667"]
+CMD ["/app/run", "irc.freenode.net:6667"]
